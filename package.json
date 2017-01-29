@@ -5,6 +5,7 @@
   "main": "js/index.js",
   "dependencies": {
     "chai": "^3.5.0",
+    "command-line-args": "^3.0.5",
     "eventemitter3": "^2.0.2",
     "line-input-stream": "^1.0.1",
     "q": "^1.4.1",

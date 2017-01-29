@@ -2,7 +2,7 @@
 require("mocha");
 const component_1 = require("../lib/component");
 const chai_1 = require("chai");
-describe('Components', () => {
+describe('Component tests', () => {
     describe('Info parsing', () => {
         const validParameterInfo = {
             identifier: "valid-parameter",
@@ -46,17 +46,21 @@ describe('Components', () => {
             chai_1.expect(info.identifier).to.equal('boo');
             chai_1.expect(info.channels).to.have.length(1);
         });
-        xit('should not initialise component with invalid channel', () => {
-            chai_1.expect(component_1.ComponentInfo.newFromJSON({
-                identifier: "boo",
-                channels: [invalidChannelInfo]
-            })).to.throw;
+        it('should not initialise component with invalid channel', () => {
+            chai_1.expect(() => {
+                component_1.ComponentInfo.newFromJSON({
+                    identifier: "boo",
+                    channels: [invalidChannelInfo]
+                });
+            }).to.throw;
         });
-        xit('should not initialise channel with invalid parameter info', () => {
-            chai_1.expect(component_1.ChannelInfo.newFromJSON({
-                identifier: "boo",
-                parameter: [invalidParameterInfo]
-            })).to.throw;
+        it('should not initialise channel with invalid parameter info', () => {
+            chai_1.expect(() => {
+                component_1.ChannelInfo.newFromJSON({
+                    identifier: "boo",
+                    parameter: [invalidParameterInfo]
+                });
+            }).to.throw;
         });
     });
 });

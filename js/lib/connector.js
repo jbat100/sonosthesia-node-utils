@@ -9,7 +9,6 @@ const LineInputStream = require('line-input-stream');
 class TCPConnector extends core_1.NativeClass {
     constructor() {
         super(...arguments);
-        this.jsonDelimiter = '__json_delimiter__';
         this.verbose = true;
         this._connections = [];
         this._emitter = new eventemitter3_1.EventEmitter();
@@ -51,8 +50,9 @@ class TCPConnector extends core_1.NativeClass {
             this._error = err;
             console.error(this.tag + ' could not create server on port ', port, err.message);
             this.emitter.emit('error', err);
-            this.stop();
-            throw err;
+            this.stop().then(() => {
+                throw err;
+            });
         });
     }
     stop() {
@@ -81,15 +81,17 @@ class TCPConnection extends core_1.NativeClass {
         console.info(this.tag + ' initialize with socket : ' + this.socket.remoteAddress + ':' + this.socket.remotePort);
         this.socket.on('close', () => {
             console.info(this.tag + ' socket closed');
-            this.connector.destroyConnection(this);
+            if (this.connector)
+                this.connector.destroyConnection(this);
         });
         this.socket.on('error', (err) => {
             console.error(this.tag + ' socket error' + err.type + ' ' + err.message);
-            this.connector.destroyConnection(this);
+            if (this.connector)
+                this.connector.destroyConnection(this);
         });
         this._lineInputStream = LineInputStream(this.socket);
         this._lineInputStream.setEncoding('utf8');
-        this._lineInputStream.setDelimiter(this.connector.jsonDelimiter);
+        this._lineInputStream.setDelimiter(this.jsonDelimiter);
         this._lineInputStream.on('line', (line) => {
             if (line && line.length) {
                 try {
@@ -104,11 +106,12 @@ class TCPConnection extends core_1.NativeClass {
             console.error(this.tag + ' line input stream error event : ' + err.message);
         });
     }
+    get jsonDelimiter() { return '__json_delimiter__'; }
     get messageObservable() { return this._messageObservable; }
     get socket() { return this._socket; }
     get connector() { return this._connector; }
     sendMessage(message) {
-        const str = this.connector.jsonDelimiter + JSON.stringify(message) + this.connector.jsonDelimiter;
+        const str = this.jsonDelimiter + JSON.stringify(message) + this.jsonDelimiter;
         if (this.connector.verbose)
             console.info(this.tag + ' sending : ' + str);
         this.socket.write(str);

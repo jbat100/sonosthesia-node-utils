@@ -11,10 +11,12 @@ import {NativeClass, Message, IConnection} from './core';
 
 const LineInputStream = require('line-input-stream');
 
+/**
+ * TCPConnector runs server side and spawns TCPConnection instances upon incoming socket connections
+ */
 
 class TCPConnector extends NativeClass {
 
-    readonly jsonDelimiter = '__json_delimiter__';
     readonly verbose = true;
     private _error : Error;
     private _server : net.Server;
@@ -60,8 +62,9 @@ class TCPConnector extends NativeClass {
             this._error = err;
             console.error(this.tag + ' could not create server on port ', port, err.message);
             this.emitter.emit('error', err);
-            this.stop();
-            throw err;
+            this.stop().then(() => {
+                throw err;
+            });
         });
     }
 
@@ -84,6 +87,12 @@ class TCPConnector extends NativeClass {
 
 }
 
+/**
+ * TCPConnection can be used both with an associated connector (when running as server) and without
+ * (when running as a client)
+ */
+
+
 class TCPConnection extends NativeClass implements IConnection {
 
     private _lineInputStream : any;
@@ -97,18 +106,18 @@ class TCPConnection extends NativeClass implements IConnection {
         // destroy connection on socket close or error
         this.socket.on('close', () => {
             console.info(this.tag + ' socket closed');
-            this.connector.destroyConnection(this);
+            if (this.connector) this.connector.destroyConnection(this);
         });
         // we NEED the error handler, otherwise it bubbles up and causes the server to crash
         this.socket.on('error', (err : any) => {
             console.error(this.tag + ' socket error' + err.type + ' ' + err.message);
-            this.connector.destroyConnection(this);
+            if (this.connector) this.connector.destroyConnection(this);
         });
 
         // setup a line input stream with the json delimiter and parse json objects
         this._lineInputStream = LineInputStream(this.socket);
         this._lineInputStream.setEncoding('utf8');
-        this._lineInputStream.setDelimiter(this.connector.jsonDelimiter);
+        this._lineInputStream.setDelimiter(this.jsonDelimiter);
         this._lineInputStream.on('line', (line : any) => {
             if (line && line.length) {
                 try {
@@ -125,6 +134,8 @@ class TCPConnection extends NativeClass implements IConnection {
 
     }
 
+    get jsonDelimiter() { return '__json_delimiter__'; }
+
     get messageObservable() : Rx.Observable<Message> { return this._messageObservable; }
 
     get socket() : net.Socket { return this._socket; }
@@ -132,7 +143,7 @@ class TCPConnection extends NativeClass implements IConnection {
     get connector() : TCPConnector { return this._connector; }
 
     sendMessage(message) {
-        const str = this.connector.jsonDelimiter + JSON.stringify(message) + this.connector.jsonDelimiter;
+        const str = this.jsonDelimiter + JSON.stringify(message) + this.jsonDelimiter;
         if (this.connector.verbose) console.info(this.tag + ' sending : ' + str);
         this.socket.write(str);
     }

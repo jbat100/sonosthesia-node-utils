@@ -1,5 +1,5 @@
+
 import * as _ from "underscore";
-//import {Map} from "core-js";
 import {expect} from "chai";
 import {NativeClass, Info, Selection, Range, IConnection} from "./core";
 

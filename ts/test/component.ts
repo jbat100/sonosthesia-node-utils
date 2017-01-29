@@ -7,7 +7,7 @@ import {ComponentInfo, ChannelInfo} from '../lib/component';
 import { expect } from 'chai';
 
 
-describe('Components', () => {
+describe('Component tests', () => {
 
     describe('Info parsing', () => {
 
@@ -64,20 +64,22 @@ describe('Components', () => {
             expect(info.channels).to.have.length(1);
         });
 
-        xit('should not initialise component with invalid channel', () => {
-            expect(ComponentInfo.newFromJSON({
-                identifier: "boo",
-                channels: [invalidChannelInfo]
-            })).to.throw;
+        it('should not initialise component with invalid channel', () => {
+            expect(() => {
+                ComponentInfo.newFromJSON({
+                    identifier: "boo",
+                    channels: [invalidChannelInfo]
+                })
+            }).to.throw;
         });
 
-        xit('should not initialise channel with invalid parameter info', () => {
-            expect(ChannelInfo.newFromJSON(
-                {
+        it('should not initialise channel with invalid parameter info', () => {
+            expect(() => {
+                ChannelInfo.newFromJSON({
                     identifier: "boo",
                     parameter: [invalidParameterInfo]
-                }
-            )).to.throw;
+                })
+            }).to.throw;
         });
 
     });
