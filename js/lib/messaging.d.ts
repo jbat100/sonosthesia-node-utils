@@ -1,4 +1,4 @@
-import { NativeClass, MessageContentParser } from '../core/core';
+import { NativeClass, MessageContentParser } from './core';
 import { ComponentInfo } from './component';
 export declare class Parameters extends NativeClass {
     private _values;
@@ -18,10 +18,10 @@ export declare class ComponentMessageContent extends MessageContent {
 export declare class ChannelMessageContent extends MessageContent {
     private _component;
     private _channel;
-    private object;
-    private parameters;
+    private _object;
+    private _parameters;
     static newFromJson(obj: any): ChannelMessageContent;
-    constructor(_component: string, _channel: string, object: string, parameters: Parameters);
+    constructor(_component: string, _channel: string, _object: string, _parameters: Parameters);
     readonly component: string;
     readonly channel: string;
     readonly object: string;
@@ -30,7 +30,7 @@ export declare class ChannelMessageContent extends MessageContent {
 export declare class ControlMessageContent extends ChannelMessageContent {
 }
 export declare class ObjectMessageContent extends ChannelMessageContent {
-    constructor(_component: string, _channel: string, object: string, parameters: Parameters);
+    constructor(component: string, channel: string, object: string, parameters: Parameters);
 }
 export declare class CreateMessageContent extends ObjectMessageContent {
 }

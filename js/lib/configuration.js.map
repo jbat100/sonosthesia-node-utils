@@ -1,0 +1,1 @@
+{"version":3,"sources":["../ts/lib/configuration.ts"],"names":[],"mappings":";AACA,iCAAqC;AAErC,mBAA2B,SAAQ,kBAAW;CAE7C;AAFD,sCAEC","file":"configuration.js","sourcesContent":["\r\nimport { NativeClass } from './core';\r\n\r\nexport class Configuration extends NativeClass {\r\n\r\n}"]}

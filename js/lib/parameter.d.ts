@@ -1,7 +1,6 @@
-import { NativeClass } from '../core/core';
+import { NativeClass } from './core';
 export declare class ParameterSample extends NativeClass {
     private _values;
-    private _timestamp;
     private _timestamp;
     constructor(_values: number[], _timestamp?: number);
     readonly values: number[];
@@ -19,10 +18,11 @@ export declare class StatefulParameterOperator extends ParameterOperator {
     constructor(_inputMemory: number, _outputMemory: number);
     readonly inputMemory: number;
     readonly outputMemory: number;
-    process(sample: ParameterSample, pastInputs: ParameterSample[], pastOutputs: ParameterSample[]): void;
+    process(sample: ParameterSample, pastInputs: ParameterSample[], pastOutputs: ParameterSample[]): ParameterSample;
 }
 export declare class ParameterProcessor extends NativeClass {
-    constructor(operator: ParameterOperator);
+    private _operator;
+    constructor(_operator: ParameterOperator);
     readonly operator: ParameterOperator;
     process(sample: ParameterSample): ParameterSample;
 }

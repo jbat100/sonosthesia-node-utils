@@ -1,8 +1,8 @@
 /// <reference types="q" />
 import * as Q from "q";
-import { NativeClass } from "../core/core";
+import { NativeClass, IConnector, IConnection } from "./core";
 import { Configuration } from './configuration';
-import { IConnector, IConnection } from "../core/interface";
+import { ComponentManager } from "./component";
 export declare class HubManager extends NativeClass {
     private _configuration;
     private _connector;
@@ -10,9 +10,9 @@ export declare class HubManager extends NativeClass {
     private _componentManager;
     constructor(_configuration: Configuration, _connector: IConnector);
     readonly configuration: Configuration;
-    readonly connector: any;
+    readonly componentManager: ComponentManager;
+    readonly connector: IConnector;
     setup(): Q.Promise<void>;
     teardown(): Q.Promise<void>;
     setupConnection(connection: IConnection): void;
-    getComponent(identifier: any): void;
 }

@@ -31,7 +31,7 @@ export class HubManager extends NativeClass {
 
     teardown() {
         return Q(null).then(() => {
-
+            console.log("booo");
         });
     }
 

@@ -1,5 +1,5 @@
 import * as _ from "underscore";
-import {Map} from "core-js";
+//import {Map} from "core-js";
 import {expect} from "chai";
 import {NativeClass, Info, Selection, Range, IConnection} from "./core";
 
@@ -33,37 +33,49 @@ export class ComponentInfo extends Info {
 
 
 export enum ChannelFlow {
+    Undefined,
     Emitter,
     Receiver
+}
+
+export enum ChannelType {
+    Undefined,
+    Event,
+    Control,
+    Generator
 }
 
 export class ChannelInfo extends Info {
 
     private _flow = ChannelFlow.Emitter;
-    private _producer = false;
+    private _type = ChannelType.Event;
     private _parameters : ParameterInfo[];
 
     applyJSON(obj : any) {
         super.applyJSON(obj);
         expect(obj.parameters).to.be.instanceof(Array);
-        this._parameters = _.map(obj.parameters, parameter => { return ParameterInfo.newFromJSON(parameter) as ParameterInfo; });
+        this._parameters = _.map(obj.parameters, parameter => {
+            return ParameterInfo.newFromJSON(parameter) as ParameterInfo;
+        });
         expect(ChannelFlow[obj.flow]).to.be.ok;
         this._flow = ChannelFlow[<string>obj.flow];
-        expect(obj.producer).to.be.a('boolean');
-        this._producer = obj.producer;
+        expect(ChannelType[obj.type]).to.be.ok;
+        this._type = ChannelType[<string>obj.type];
     }
 
     get flow() : ChannelFlow { return this._flow; }
 
-    get producer() : boolean { return this._producer; }
+    get type() : ChannelType { return this._type; }
 
     get parameters() : ParameterInfo[] { return this._parameters; }
 
     makeJSON() : any {
         const obj = super.makeJSON();
         obj.flow = ChannelFlow[this.flow]; // convert to string
-        obj.producer = this.producer;
-        obj.parameters = _.map(this.parameters, (parameter : ParameterInfo) => { return parameter.makeJSON(); });
+        obj.producer = ChannelType[this.type];
+        obj.parameters = _.map(this.parameters, (parameter : ParameterInfo) => {
+            return parameter.makeJSON();
+        });
         return obj;
     }
 

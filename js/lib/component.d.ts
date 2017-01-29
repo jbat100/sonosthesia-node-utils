@@ -1,5 +1,4 @@
-import { NativeClass, Info, Selection, Range } from "../core/core";
-import { IConnection } from "../core/interface";
+import { NativeClass, Info, Selection, Range, IConnection } from "./core";
 export declare class ComponentInfo extends Info {
     private _channels;
     applyJSON(obj: any): void;
@@ -7,16 +6,23 @@ export declare class ComponentInfo extends Info {
     makeJSON(): any;
 }
 export declare enum ChannelFlow {
-    Emitter = 0,
-    Receiver = 1,
+    Undefined = 0,
+    Emitter = 1,
+    Receiver = 2,
+}
+export declare enum ChannelType {
+    Undefined = 0,
+    Event = 1,
+    Control = 2,
+    Generator = 3,
 }
 export declare class ChannelInfo extends Info {
     private _flow;
-    private _producer;
+    private _type;
     private _parameters;
     applyJSON(obj: any): void;
     readonly flow: ChannelFlow;
-    readonly producer: boolean;
+    readonly type: ChannelType;
     readonly parameters: ParameterInfo[];
     makeJSON(): any;
 }
@@ -50,6 +56,6 @@ export declare class ComponentManager extends NativeClass {
     registerComponent(connection: IConnection, info: ComponentInfo): void;
     unregisterComponent(connection: IConnection, identifier: string): void;
     getComponent(identifier: string, required?: boolean): Component;
-    getComponents(connection: IConnection): Component[];
+    getComponents(connection: IConnection, required?: boolean): Component[];
     clean(connection: IConnection): void;
 }
