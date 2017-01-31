@@ -29,6 +29,8 @@ export declare class ChannelMessageContent extends MessageContent {
 }
 export declare class ControlMessageContent extends ChannelMessageContent {
 }
+export declare class ActionMessageContent extends ChannelMessageContent {
+}
 export declare class ObjectMessageContent extends ChannelMessageContent {
     constructor(component: string, channel: string, object: string, parameters: Parameters);
 }
@@ -38,9 +40,10 @@ export declare class DestroyMessageContent extends ObjectMessageContent {
 }
 export declare enum HubMessageType {
     component = 0,
-    control = 1,
-    create = 2,
-    destroy = 3,
+    action = 1,
+    control = 2,
+    create = 3,
+    destroy = 4,
 }
 export declare class HubMessageContentParser extends MessageContentParser {
     private _contentClasses;

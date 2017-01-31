@@ -76,6 +76,9 @@ exports.ChannelMessageContent = ChannelMessageContent;
 class ControlMessageContent extends ChannelMessageContent {
 }
 exports.ControlMessageContent = ControlMessageContent;
+class ActionMessageContent extends ChannelMessageContent {
+}
+exports.ActionMessageContent = ActionMessageContent;
 class ObjectMessageContent extends ChannelMessageContent {
     constructor(component, channel, object, parameters) {
         chai_1.expect(object).to.be.ok;
@@ -92,9 +95,10 @@ exports.DestroyMessageContent = DestroyMessageContent;
 var HubMessageType;
 (function (HubMessageType) {
     HubMessageType[HubMessageType["component"] = 0] = "component";
-    HubMessageType[HubMessageType["control"] = 1] = "control";
-    HubMessageType[HubMessageType["create"] = 2] = "create";
-    HubMessageType[HubMessageType["destroy"] = 3] = "destroy";
+    HubMessageType[HubMessageType["action"] = 1] = "action";
+    HubMessageType[HubMessageType["control"] = 2] = "control";
+    HubMessageType[HubMessageType["create"] = 3] = "create";
+    HubMessageType[HubMessageType["destroy"] = 4] = "destroy";
 })(HubMessageType = exports.HubMessageType || (exports.HubMessageType = {}));
 class HubMessageContentParser extends core_1.MessageContentParser {
     constructor() {
@@ -102,6 +106,7 @@ class HubMessageContentParser extends core_1.MessageContentParser {
         this._contentClasses = {
             'component': ComponentMessageContent,
             'control': ControlMessageContent,
+            'action': ActionMessageContent,
             'create': CreateMessageContent,
             'destroy': DestroyMessageContent
         };

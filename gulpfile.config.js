@@ -5,7 +5,7 @@ var GulpConfig = (function () {
         this.allJavaScript = ['./js/**/*.js'];
         this.allTypeScript = './ts/**/*.ts';
         this.typings = './typings/';
-        this.libraryTypeScriptDefinitions = './typings/main/**/*.ts';
+        this.libraryTypeScriptDefinitions = './typings/generate/**/*.ts';
     }
     return gulpConfig;
 })();

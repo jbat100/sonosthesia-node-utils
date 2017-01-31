@@ -93,6 +93,8 @@ export class ChannelMessageContent extends MessageContent {
 
 export class ControlMessageContent extends ChannelMessageContent { }
 
+export class ActionMessageContent extends ChannelMessageContent { }
+
 /**
  * Object cannot be null
  */
@@ -113,6 +115,7 @@ export class DestroyMessageContent extends ObjectMessageContent { }
 
 export enum HubMessageType {
     component,
+    action,
     control,
     create,
     destroy
@@ -123,6 +126,7 @@ export class HubMessageContentParser extends MessageContentParser {
     private _contentClasses = {
         'component' : ComponentMessageContent,
         'control' : ControlMessageContent,
+        'action' : ActionMessageContent,
         'create': CreateMessageContent,
         'destroy': DestroyMessageContent
     };

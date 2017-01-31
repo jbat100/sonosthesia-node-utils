@@ -30,14 +30,18 @@ export declare class Message extends NativeClass {
     private _date;
     private _content;
     private _raw;
-    _parsed: boolean;
-    static newFromRaw(raw: string): Message;
-    constructor(_type: string, _date: Date, _content: any, _raw?: string);
+    static checkJSON(obj: any): void;
+    static newFromJSON(obj: any, parser: MessageContentParser): Message;
+    constructor(_type: string, _date: Date, _content: any);
     readonly type: string;
     readonly date: Date;
     readonly content: any;
     readonly raw: string;
-    parse(parser: MessageContentParser): void;
+    toJSON(): {
+        type: string;
+        date: string;
+        content: any;
+    };
 }
 export declare class Declarable extends NativeClass {
     private _identifier;

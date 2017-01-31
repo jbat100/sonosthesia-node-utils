@@ -30,29 +30,33 @@ class MessageContentParser extends NativeClass {
 }
 exports.MessageContentParser = MessageContentParser;
 class Message extends NativeClass {
-    constructor(_type, _date, _content, _raw) {
+    constructor(_type, _date, _content) {
         super();
         this._type = _type;
         this._date = _date;
         this._content = _content;
-        this._raw = _raw;
-        this._parsed = false;
     }
-    static newFromRaw(raw) {
-        const obj = JSON.parse(raw);
+    static checkJSON(obj) {
         chai_1.expect(obj.type).to.be.a('string');
         chai_1.expect(obj.date).to.be.a('string');
-        return new this(obj.type, new Date(obj.date), obj.content, raw);
+    }
+    static newFromJSON(obj, parser) {
+        return new this(obj.type, new Date(obj.date), parser.parse(obj.type, obj.content));
     }
     get type() { return this._type; }
     get date() { return this._date; }
     get content() { return this._content; }
-    get raw() { return this._raw; }
-    parse(parser) {
-        if (this._parsed)
-            throw new Error('message content is already parsed');
-        this._content = parser.parse(this.type, this.content);
-        this._parsed = true;
+    get raw() {
+        if (!this._raw)
+            this._raw = JSON.stringify(this.toJSON());
+        return this._raw;
+    }
+    toJSON() {
+        return {
+            type: this.type,
+            date: this.date.toISOString(),
+            content: this.content.toJSON()
+        };
     }
 }
 exports.Message = Message;
