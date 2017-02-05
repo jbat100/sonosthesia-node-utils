@@ -17,7 +17,7 @@ const iterations = 1000000;
 let current = 0;
 
 const optionDefinitions = [
-    { name: 'type', alias: 'm', type: String },
+    { name: 'type', alias: 't', type: String },
     { name: 'address', alias: 'a', type: String },
     { name: 'port', alias: 'p', type: Number },
     { name: 'interval', alias: 'i', type: Number },
@@ -28,7 +28,6 @@ const options = commandLineArgs(optionDefinitions);
 
 // enter default options
 
-if (!options.target) options.target = 'test';
 if (!options.type) options.type = 'control';
 if (!options.address) options.address = '127.0.0.1';
 if (!options.port) options.port = 3333;
@@ -103,8 +102,9 @@ async function generate(connection : TCPConnection, generator : any) {
     while (current < iterations) {
         current++;
         await delay(options.interval);
-        const message = generator.next();
-        connection.sendMessage(message);
+        const obj = generator.next();
+        connection.sendMessage(obj.value);
+        if (obj.done) break;
     }
 }
 
@@ -128,7 +128,7 @@ client.connect(options.port, options.address, () => {
     console.log('Connected');
     const connection = new TCPConnection(null, client, parser);
     generate(connection, generator).then(() => { console.log('done'); }).catch(err => {
-        console.log('ended with ' + err);
+        console.log('Ended with error ' + err.stack);
     });
 });
 

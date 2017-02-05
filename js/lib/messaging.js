@@ -9,16 +9,18 @@ class Parameters extends core_1.NativeClass {
         this._values = {};
     }
     static newFromJSON(obj) {
-        chai_1.expect(obj).to.be.an('object');
         const parameters = new this();
-        _.each(obj, (value, key) => {
-            chai_1.expect(key).to.be.a('string');
-            if (typeof value === 'number')
-                value = [value];
-            if (!_.isArray(value))
-                throw new Error('value should be number or array');
-            parameters.setParameter(key, value);
-        });
+        if (obj) {
+            chai_1.expect(obj).to.be.an('object');
+            _.each(obj, (value, key) => {
+                chai_1.expect(key).to.be.a('string');
+                if (typeof value === 'number')
+                    value = [value];
+                if (!_.isArray(value))
+                    throw new Error('value should be number or array');
+                parameters.setParameter(key, value);
+            });
+        }
         return parameters;
     }
     toJSON() {
@@ -146,27 +148,21 @@ class HubMessage extends core_1.Message {
         return new this(hubMessageType, new Date(obj.date), parser.parse(obj.type, obj.content));
     }
     constructor(type, date, content) {
-        const typeStr = HubMessageType[type];
-        if (!_.has(HubMessageContentClasses, typeStr))
+        const expectedContentClass = HubMessageContentClasses[type];
+        if (!expectedContentClass)
             throw new Error('unsupported message type : ' + type);
-        const expectedContentClass = HubMessageContentClasses[typeStr];
         chai_1.expect(content).to.be.instanceOf(expectedContentClass);
-        super(typeStr, date, content);
-    }
-    toJSON() {
-        return {
-            type: HubMessageType[this.type],
-            date: this.date.toISOString(),
-            content: this.content.toJSON()
-        };
+        super(HubMessageType[type], date, content);
     }
 }
 exports.HubMessage = HubMessage;
 class HubMessageContentParser extends core_1.MessageContentParser {
-    parse(type, content) {
-        if (!_.has(HubMessageContentClasses, type))
+    parse(typeStr, content) {
+        const type = HubMessageType[typeStr];
+        const contentClass = HubMessageContentClasses[type];
+        if (!contentClass)
             throw new Error('unsupported message type : ' + type);
-        return HubMessageContentClasses[type].newFromJSON(content);
+        return contentClass.newFromJSON(content);
     }
 }
 exports.HubMessageContentParser = HubMessageContentParser;

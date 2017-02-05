@@ -18,15 +18,13 @@ const messaging_3 = require("../lib/messaging");
 const iterations = 1000000;
 let current = 0;
 const optionDefinitions = [
-    { name: 'type', alias: 'm', type: String },
+    { name: 'type', alias: 't', type: String },
     { name: 'address', alias: 'a', type: String },
     { name: 'port', alias: 'p', type: Number },
     { name: 'interval', alias: 'i', type: Number },
     { name: 'count', alias: 'c', type: Number }
 ];
 const options = commandLineArgs(optionDefinitions);
-if (!options.target)
-    options.target = 'test';
 if (!options.type)
     options.type = 'control';
 if (!options.address)
@@ -91,8 +89,10 @@ function generate(connection, generator) {
         while (current < iterations) {
             current++;
             yield delay(options.interval);
-            const message = generator.next();
-            connection.sendMessage(message);
+            const obj = generator.next();
+            connection.sendMessage(obj.value);
+            if (obj.done)
+                break;
         }
     });
 }
@@ -112,7 +112,7 @@ client.connect(options.port, options.address, () => {
     console.log('Connected');
     const connection = new connector_1.TCPConnection(null, client, parser);
     generate(connection, generator).then(() => { console.log('done'); }).catch(err => {
-        console.log('ended with ' + err);
+        console.log('Ended with error ' + err.stack);
     });
 });
 

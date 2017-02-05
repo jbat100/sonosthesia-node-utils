@@ -10,15 +10,18 @@ export class Parameters extends NativeClass {
 
     private _values = {};
 
+    // accepts null for empty parameter set
     static newFromJSON(obj : any) {
-        expect(obj).to.be.an('object');
         const parameters = new this();
-        _.each(obj, (value, key : string) => {
-            expect(key).to.be.a('string');
-            if (typeof value === 'number') value = [value];
-            if (!_.isArray(value)) throw new Error('value should be number or array');
-            parameters.setParameter(key, value);
-        });
+        if (obj) {
+            expect(obj).to.be.an('object');
+            _.each(obj, (value, key : string) => {
+                expect(key).to.be.a('string');
+                if (typeof value === 'number') value = [value];
+                if (!_.isArray(value)) throw new Error('value should be number or array');
+                parameters.setParameter(key, value);
+            });
+        }
         return parameters;
     }
 
@@ -192,30 +195,24 @@ export class HubMessage extends Message {
     }
 
     constructor(type : HubMessageType, date : Date, content : any) {
-        const typeStr : string = HubMessageType[type];
-        if (!_.has(HubMessageContentClasses, typeStr))
-            throw new Error('unsupported message type : ' + type);
-        const expectedContentClass = HubMessageContentClasses[typeStr];
+        // note that Map has doesn't seem to work
+        const expectedContentClass = HubMessageContentClasses[type];
+        if (!expectedContentClass) throw new Error('unsupported message type : ' + type);
+        //const expectedContentClass = HubMessageContentClasses[type];
         expect(content).to.be.instanceOf(expectedContentClass);
-        super(typeStr, date, content);
-    }
-
-    toJSON() :any {
-        return {
-            type: HubMessageType[this.type],
-            date: this.date.toISOString(),
-            content: this.content.toJSON()
-        }
+        super(HubMessageType[type] as string, date, content);
     }
 
 }
 
 export class HubMessageContentParser extends MessageContentParser {
 
-    parse(type : string, content : any) : any {
-        if (!_.has(HubMessageContentClasses, type))
-            throw new Error('unsupported message type : ' + type);
-        return HubMessageContentClasses[type].newFromJSON(content);
+    parse(typeStr : string, content : any) : any {
+        const type : HubMessageType = HubMessageType[typeStr];
+        // note that Map has doesn't seem to work
+        const contentClass = HubMessageContentClasses[type];
+        if (!contentClass) throw new Error('unsupported message type : ' + type);
+        return contentClass.newFromJSON(content);
     }
 
 }

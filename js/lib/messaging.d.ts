@@ -57,8 +57,7 @@ export declare enum HubMessageType {
 export declare class HubMessage extends Message {
     static newFromJSON(obj: any, parser: MessageContentParser): Message;
     constructor(type: HubMessageType, date: Date, content: any);
-    toJSON(): any;
 }
 export declare class HubMessageContentParser extends MessageContentParser {
-    parse(type: string, content: any): any;
+    parse(typeStr: string, content: any): any;
 }

@@ -36,6 +36,8 @@ class Message extends NativeClass {
         this._type = _type;
         this._date = _date;
         this._content = _content;
+        if (!this._date)
+            this._date = new Date();
     }
     static checkJSON(obj) {
         chai_1.expect(obj.type).to.be.a('string');

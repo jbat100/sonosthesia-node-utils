@@ -57,7 +57,7 @@ export class NativeClass {
         // http://codepen.io/techniq/pen/qdZeZm
         return expect(instance).to.be.instanceof(klass);
     }
-    get tag() { return this.constructor.name; }
+    get tag() : string { return this.constructor.name; }
 }
 
 export class NativeEmitterClass extends EventEmitter {
@@ -89,6 +89,7 @@ export class Message extends NativeClass {
 
     constructor(private _type : string, private _date : Date, private _content: any) {
         super();
+        if (!this._date) this._date = new Date();
     }
 
     get type() : string { return this._type; }

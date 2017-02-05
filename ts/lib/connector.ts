@@ -7,7 +7,8 @@ import * as Q from 'q';
 import * as Rx from 'rx';
 import {EventEmitter} from 'eventemitter3';
 
-import {NativeClass, Message, MessageContentParser, IConnection} from './core';
+import {NativeClass, Message, MessageContentParser, IConnection, GUID} from './core';
+import {HubMessage} from "./messaging";
 
 const LineInputStream = require('line-input-stream');
 
@@ -33,8 +34,8 @@ export class TCPConnector extends NativeClass {
     get emitter() { return this._emitter; }
     get parser() { return this._parser; }
 
-    start(port) : Promise<void> {
-        return new Promise((resolve, reject) => {
+    start(port) : Q.Promise<void> {
+        return Q.Promise((resolve, reject) => {
             if (this.server) return reject(new Error('connector is already started'));
             console.info(this.tag + ' start on port ' + port);
             this._server = net.createServer((socket) => {
@@ -52,12 +53,12 @@ export class TCPConnector extends NativeClass {
             });
             this.server.on('close', () => {
                 console.error(this.tag + ' server close');
-                reject();
+                reject(new Error('closed'));
                 this.stop();
             });
             this.server.on('listening', () => {
                 console.info(this.tag + ' server listening on port ' + port);
-                resolve();
+                resolve(null);
                 this._error = null;
                 this.emitter.emit('start');
             });
@@ -74,8 +75,8 @@ export class TCPConnector extends NativeClass {
         });
     }
 
-    stop() : Promise<void> {
-        return Promise.resolve().then(() => {
+    stop() : Q.Promise<void> {
+        return Q().then(() => {
             if (this.server) {
                 this.server.removeAllListeners();
                 this.server.close();
@@ -108,11 +109,15 @@ export class TCPConnection extends NativeClass implements IConnection {
     private _messageSubject : Rx.Subject<Message> = new Rx.Subject<Message>();
     private _messageObservable: Rx.Observable<Message> = this._messageSubject.asObservable();
 
+    private _identifier : string;
+
     constructor(private _connector : TCPConnector,
                 private _socket : net.Socket,
                 private _parser : MessageContentParser) {
         super();
-        console.info(this.tag + ' initialize with socket : ' + this.socket.remoteAddress +':'+ this.socket.remotePort);
+        this._identifier = GUID.generate();
+        console.info(this.tag + ' initializing : ' + this.socket.remoteAddress +':'+ this.socket.remotePort);
+
         // destroy connection on socket close or error
         this.socket.on('close', () => {
             console.info(this.tag + ' socket closed');
@@ -120,7 +125,7 @@ export class TCPConnection extends NativeClass implements IConnection {
         });
         // we NEED the error handler, otherwise it bubbles up and causes the server to crash
         this.socket.on('error', (err : any) => {
-            console.error(this.tag + ' socket error' + err.type + ' ' + err.message);
+            console.error(this.tag + ' socket error ' + err.type + ' ' + err.message);
             if (this.connector) this.connector.destroyConnection(this);
         });
 
@@ -133,18 +138,20 @@ export class TCPConnection extends NativeClass implements IConnection {
                 try {
                     //console.info(this.tag + ' parsed json');
                     const obj = JSON.parse(line);
-                    this._messageSubject.onNext(Message.newFromJSON(obj, this.parser));
+                    this._messageSubject.onNext(HubMessage.newFromJSON(obj, this.parser));
                 } catch (err) {
-                    console.error(this.tag + ' json parsing error : ' + err.message);
+                    console.error(this.tag + ' json parsing error : ' + err.stack);
                 }
             }
         });
         this._lineInputStream.on('error', err => {
-            console.error(this.tag + ' line input stream error event : ' + err.message);
+            console.error(this.tag + ' line input stream error : ' + err.message);
         });
 
     }
 
+    get tag() : string { return this.constructor.name + ' (' + this.identifier.substr(0, 10) + '...)'; }
+    get identifier() : string { return this._identifier; }
     get jsonDelimiter() : string { return '__json_delimiter__'; }
     get messageObservable() : Rx.Observable<Message> { return this._messageObservable; }
     get socket() : net.Socket { return this._socket; }

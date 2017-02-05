@@ -1,9 +1,11 @@
 "use strict";
 const net = require("net");
 const _ = require("underscore");
+const Q = require("q");
 const Rx = require("rx");
 const eventemitter3_1 = require("eventemitter3");
 const core_1 = require("./core");
+const messaging_1 = require("./messaging");
 const LineInputStream = require('line-input-stream');
 class TCPConnector extends core_1.NativeClass {
     constructor(_parser) {
@@ -18,7 +20,7 @@ class TCPConnector extends core_1.NativeClass {
     get emitter() { return this._emitter; }
     get parser() { return this._parser; }
     start(port) {
-        return new Promise((resolve, reject) => {
+        return Q.Promise((resolve, reject) => {
             if (this.server)
                 return reject(new Error('connector is already started'));
             console.info(this.tag + ' start on port ' + port);
@@ -36,12 +38,12 @@ class TCPConnector extends core_1.NativeClass {
             });
             this.server.on('close', () => {
                 console.error(this.tag + ' server close');
-                reject();
+                reject(new Error('closed'));
                 this.stop();
             });
             this.server.on('listening', () => {
                 console.info(this.tag + ' server listening on port ' + port);
-                resolve();
+                resolve(null);
                 this._error = null;
                 this.emitter.emit('start');
             });
@@ -57,7 +59,7 @@ class TCPConnector extends core_1.NativeClass {
         });
     }
     stop() {
-        return Promise.resolve().then(() => {
+        return Q().then(() => {
             if (this.server) {
                 this.server.removeAllListeners();
                 this.server.close();
@@ -82,14 +84,15 @@ class TCPConnection extends core_1.NativeClass {
         this.verbose = true;
         this._messageSubject = new Rx.Subject();
         this._messageObservable = this._messageSubject.asObservable();
-        console.info(this.tag + ' initialize with socket : ' + this.socket.remoteAddress + ':' + this.socket.remotePort);
+        this._identifier = core_1.GUID.generate();
+        console.info(this.tag + ' initializing : ' + this.socket.remoteAddress + ':' + this.socket.remotePort);
         this.socket.on('close', () => {
             console.info(this.tag + ' socket closed');
             if (this.connector)
                 this.connector.destroyConnection(this);
         });
         this.socket.on('error', (err) => {
-            console.error(this.tag + ' socket error' + err.type + ' ' + err.message);
+            console.error(this.tag + ' socket error ' + err.type + ' ' + err.message);
             if (this.connector)
                 this.connector.destroyConnection(this);
         });
@@ -100,17 +103,19 @@ class TCPConnection extends core_1.NativeClass {
             if (line && line.length) {
                 try {
                     const obj = JSON.parse(line);
-                    this._messageSubject.onNext(core_1.Message.newFromJSON(obj, this.parser));
+                    this._messageSubject.onNext(messaging_1.HubMessage.newFromJSON(obj, this.parser));
                 }
                 catch (err) {
-                    console.error(this.tag + ' json parsing error : ' + err.message);
+                    console.error(this.tag + ' json parsing error : ' + err.stack);
                 }
             }
         });
         this._lineInputStream.on('error', err => {
-            console.error(this.tag + ' line input stream error event : ' + err.message);
+            console.error(this.tag + ' line input stream error : ' + err.message);
         });
     }
+    get tag() { return this.constructor.name + ' (' + this.identifier.substr(0, 10) + '...)'; }
+    get identifier() { return this._identifier; }
     get jsonDelimiter() { return '__json_delimiter__'; }
     get messageObservable() { return this._messageObservable; }
     get socket() { return this._socket; }
