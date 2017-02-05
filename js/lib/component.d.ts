@@ -3,7 +3,7 @@ export declare class ComponentInfo extends Info {
     private _channels;
     applyJSON(obj: any): void;
     readonly channels: ChannelInfo[];
-    makeJSON(): any;
+    toJSON(): any;
 }
 export declare enum ChannelFlow {
     Undefined = 0,
@@ -24,7 +24,7 @@ export declare class ChannelInfo extends Info {
     readonly flow: ChannelFlow;
     readonly type: ChannelType;
     readonly parameters: ParameterInfo[];
-    makeJSON(): any;
+    toJSON(): any;
 }
 export declare class ParameterInfo extends Info {
     private _defaultValue;
@@ -32,7 +32,7 @@ export declare class ParameterInfo extends Info {
     applyJSON(obj: any): void;
     readonly defaultValue: number;
     readonly range: Range;
-    makeJSON(): any;
+    toJSON(): any;
 }
 export declare class ComponentSelection extends Selection {
 }

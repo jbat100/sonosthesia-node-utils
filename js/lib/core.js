@@ -2,6 +2,7 @@
 const _ = require("underscore");
 const chai_1 = require("chai");
 const eventemitter3_1 = require("eventemitter3");
+const uuid = require("node-uuid");
 var ConnectorState;
 (function (ConnectorState) {
     ConnectorState[ConnectorState["None"] = 0] = "None";
@@ -41,6 +42,7 @@ class Message extends NativeClass {
         chai_1.expect(obj.date).to.be.a('string');
     }
     static newFromJSON(obj, parser) {
+        this.checkJSON(obj);
         return new this(obj.type, new Date(obj.date), parser.parse(obj.type, obj.content));
     }
     get type() { return this._type; }
@@ -99,7 +101,7 @@ class Info extends NativeClass {
         chai_1.expect(obj.identifier).to.be.a('string');
         this._identifier = obj.identifier;
     }
-    makeJSON() {
+    toJSON() {
         return _.pick(this, 'identifier');
     }
 }
@@ -133,10 +135,16 @@ class Range extends NativeClass {
     set max(max) { this._max = max; }
     check() { if (this._min > this._max)
         throw new Error('min should be less than max'); }
-    makeJSON() {
+    toJSON() {
         return _.pick(this, 'min', 'max');
     }
 }
 exports.Range = Range;
+class GUID extends NativeClass {
+    static generate() {
+        return uuid.v4();
+    }
+}
+exports.GUID = GUID;
 
 //# sourceMappingURL=core.js.map

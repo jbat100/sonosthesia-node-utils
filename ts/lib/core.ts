@@ -3,11 +3,14 @@ import * as _ from 'underscore';
 import {expect} from "chai";
 import {EventEmitter} from 'eventemitter3';
 import * as Rx from 'rx';
+import * as uuid from 'node-uuid';
 
 
 export interface IConnection {
 
     messageObservable : Rx.Observable<Message>;
+
+    sendJSON(message : any);
 
     sendMessage(message : Message);
 
@@ -80,6 +83,7 @@ export class Message extends NativeClass {
     }
 
     static newFromJSON(obj : any, parser : MessageContentParser) : Message {
+        this.checkJSON(obj);
         return new this(obj.type, new Date(<string>obj.date), parser.parse(obj.type, obj.content));
     }
 
@@ -88,18 +92,15 @@ export class Message extends NativeClass {
     }
 
     get type() : string { return this._type; }
-
     get date() : Date { return this._date; }
-
     get content() : any { return this._content; }
-
     get raw() : string {
         if (!this._raw)
             this._raw = JSON.stringify(this.toJSON());
         return this._raw;
     }
 
-    toJSON() {
+    toJSON() : any {
         return {
             type: this.type,
             date: this.date.toISOString(),
@@ -131,7 +132,6 @@ export class Declarable extends NativeClass {
     }
 
     get identifier() : string { return this._identifier; }
-
     get live() : boolean { return this._live; }
     set live(value : boolean) {
         this._live = value;
@@ -171,7 +171,7 @@ export class Info extends NativeClass {
         this._identifier = obj.identifier;
     }
 
-    makeJSON() : any {
+    toJSON() : any {
         return _.pick(this, 'identifier');
     }
 
@@ -188,11 +188,8 @@ export class Selection {
     }
 
     get identifier() : string { return this._identifier; }
-
     set identifier(identifier : string) { this._identifier = identifier; }
-
     get valid() : boolean { return this._valid; }
-
     set valid(valid : boolean) { this._valid = valid; }
 
 }
@@ -211,17 +208,22 @@ export class Range extends NativeClass {
     }
 
     get min() : number { return this._min; }
-
     set min(min : number) { this._min = min; }
-
     get max() : number { return this._max; }
-
     set max(max : number) { this._max = max; }
 
     check() { if (this._min > this._max) throw new Error('min should be less than max'); }
 
-    makeJSON() {
+    toJSON() {
         return _.pick(this, 'min', 'max');
+    }
+
+}
+
+export class GUID extends NativeClass {
+
+    static generate() : string {
+        return uuid.v4();
     }
 
 }

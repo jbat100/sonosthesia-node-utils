@@ -6,7 +6,6 @@ import { ComponentManager } from "./component";
 export declare class HubManager extends NativeClass {
     private _configuration;
     private _connector;
-    private _messageContentParser;
     private _componentManager;
     constructor(_configuration: Configuration, _connector: IConnector);
     readonly configuration: Configuration;

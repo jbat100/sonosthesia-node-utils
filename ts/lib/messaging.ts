@@ -2,7 +2,7 @@
 import * as _ from "underscore";
 import { expect } from 'chai';
 
-import { NativeClass, MessageContentParser } from './core';
+import {NativeClass, MessageContentParser, Message} from './core';
 import { ComponentInfo } from './component';
 
 
@@ -10,7 +10,7 @@ export class Parameters extends NativeClass {
 
     private _values = {};
 
-    static newFromJson(obj : any) {
+    static newFromJSON(obj : any) {
         expect(obj).to.be.an('object');
         const parameters = new this();
         _.each(obj, (value, key : string) => {
@@ -20,6 +20,10 @@ export class Parameters extends NativeClass {
             parameters.setParameter(key, value);
         });
         return parameters;
+    }
+
+    toJSON() : any {
+        return this._values;
     }
 
     getKeys() : string[] {
@@ -41,11 +45,15 @@ export class Parameters extends NativeClass {
 
 export class MessageContent extends NativeClass {
 
+    toJSON() : any {
+        return {};
+    }
+
 }
 
 export class ComponentMessageContent extends MessageContent {
 
-    static newFromJson(obj : any) {
+    static newFromJSON(obj : any) {
         expect(obj.component).to.be.an('object');
         const component : ComponentInfo = ComponentInfo.newFromJSON(obj.component) as ComponentInfo;
         return new this(component);
@@ -53,6 +61,12 @@ export class ComponentMessageContent extends MessageContent {
 
     constructor(private _component : ComponentInfo) {
         super();
+    }
+
+    toJSON() : any {
+        return {
+            component : this.component.toJSON()
+        }
     }
 
     get component() : ComponentInfo { return this._component; }
@@ -65,75 +79,143 @@ export class ComponentMessageContent extends MessageContent {
 
 export class ChannelMessageContent extends MessageContent {
 
-    static newFromJson(obj : any) {
-        expect(obj.component).to.be.an('object');
+    static checkJSON(obj : any) {
+        // component and channel are mandatory
         expect(obj.component).to.be.a('string');
         expect(obj.channel).to.be.a('string');
-        expect(obj.object).to.be.a('string');
-        return new this(obj.component, obj.channel, obj.object, Parameters.newFromJson(obj.parameters));
+        // instance and key are optional
+        if (obj.instance) expect(obj.instance).to.be.a('string');
+        if (obj.key) expect(obj.key).to.be.a('string');
+    }
+
+    static newFromJSON(obj : any) {
+        this.checkJSON(obj);
+        const parameters = Parameters.newFromJSON(obj.parameters);
+        return new this(obj.component, obj.channel, obj.instance, obj.key, parameters);
     }
 
     constructor(private _component : string,
                 private _channel : string,
-                private _object : string,
+                private _instance : string,
+                private _key : string,
                 private _parameters : Parameters) {
-
         super();
     }
 
+    toJSON() : any {
+        return {
+            component : this.component,
+            channel: this.channel,
+            instance: this.instance, // may be null
+            key: this.key, // may be null
+            parameters: (this.parameters ? this.parameters.toJSON() : null)
+        }
+    }
+
     get component() : string { return this._component; }
-
     get channel() : string { return this._channel; }
-
-    get object() : string { return this._object; }
-
+    get instance() : string { return this._instance; }
+    get key() : string { return this._key; }
     get parameters() : Parameters { return this._parameters; }
+
+
+    // determine whether the message targets a channel or an instance
+
+    isInstanceMessage() : boolean { return this.instance != null; }
 
 }
 
+// NOTE: for control and action messages, the presence of instance determined
+// whether it is an instance (dynamic) or channel (static) message
+
 export class ControlMessageContent extends ChannelMessageContent { }
 
-export class ActionMessageContent extends ChannelMessageContent { }
+export class ActionMessageContent extends ChannelMessageContent {
+
+    static checkJSON(obj : any) {
+        super.checkJSON(obj);
+        // key is mandatory
+        expect(obj.key).to.be.a('string');
+    }
+
+}
 
 /**
  * Object cannot be null
  */
-export class ObjectMessageContent extends ChannelMessageContent {
+export class InstanceMessageContent extends ChannelMessageContent {
 
-    constructor(component : string, channel : string, object : string, parameters : Parameters) {
-        expect(object).to.be.ok;
-        super(component, channel, object, parameters);
+    static checkJSON(obj : any) {
+        super.checkJSON(obj);
+        // key is mandatory
+        expect(obj.instance).to.be.a('string');
     }
 
 }
 
-export class CreateMessageContent extends ObjectMessageContent { }
-
-export class DestroyMessageContent extends ObjectMessageContent { }
+export class CreateMessageContent extends InstanceMessageContent {
 
 
+
+}
+
+export class DestroyMessageContent extends InstanceMessageContent { }
+
+
+// may become necessary to distinguish between channel and instance versions of control and action messages
 
 export enum HubMessageType {
-    component,
-    action,
-    control,
-    create,
-    destroy
+    Component,
+    Action,
+    Control,
+    Create,
+    Destroy
+}
+
+const HubMessageContentClasses = new Map<HubMessageType, typeof MessageContent>();
+
+HubMessageContentClasses[HubMessageType.Component] = ComponentMessageContent;
+HubMessageContentClasses[HubMessageType.Control] = ControlMessageContent;
+HubMessageContentClasses[HubMessageType.Action] = ActionMessageContent;
+HubMessageContentClasses[HubMessageType.Create] = CreateMessageContent;
+HubMessageContentClasses[HubMessageType.Destroy] = DestroyMessageContent;
+
+
+export class HubMessage extends Message {
+
+    // this subclass enforces a given set of types and checks that the content passed to the constructor matches the type
+
+    static newFromJSON(obj : any, parser : MessageContentParser) : Message {
+        this.checkJSON(obj);
+        const hubMessageType : HubMessageType = HubMessageType[obj.type as string];
+        return new this(hubMessageType, new Date(<string>obj.date), parser.parse(obj.type, obj.content)) as Message;
+    }
+
+    constructor(type : HubMessageType, date : Date, content : any) {
+        const typeStr : string = HubMessageType[type];
+        if (!_.has(HubMessageContentClasses, typeStr))
+            throw new Error('unsupported message type : ' + type);
+        const expectedContentClass = HubMessageContentClasses[typeStr];
+        expect(content).to.be.instanceOf(expectedContentClass);
+        super(typeStr, date, content);
+    }
+
+    toJSON() :any {
+        return {
+            type: HubMessageType[this.type],
+            date: this.date.toISOString(),
+            content: this.content.toJSON()
+        }
+    }
+
 }
 
 export class HubMessageContentParser extends MessageContentParser {
 
-    private _contentClasses = {
-        'component' : ComponentMessageContent,
-        'control' : ControlMessageContent,
-        'action' : ActionMessageContent,
-        'create': CreateMessageContent,
-        'destroy': DestroyMessageContent
-    };
-
     parse(type : string, content : any) : any {
-        if (!_.has(this._contentClasses, type)) throw new Error('unsupported message type : ' + type);
-        return this._contentClasses[type].newFromJson(content);
+        if (!_.has(HubMessageContentClasses, type))
+            throw new Error('unsupported message type : ' + type);
+        return HubMessageContentClasses[type].newFromJSON(content);
     }
 
 }

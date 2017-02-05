@@ -9,8 +9,6 @@ import {ComponentManager} from "./component";
 
 export class HubManager extends NativeClass {
 
-    private _messageContentParser = new HubMessageContentParser();
-
     private _componentManager = new ComponentManager();
 
     constructor(private _configuration : Configuration, private _connector : IConnector) {
@@ -18,9 +16,7 @@ export class HubManager extends NativeClass {
     }
 
     get configuration() { return this._configuration; }
-
     get componentManager() { return this._componentManager; }
-
     get connector() { return this._connector; }
 
     setup() {
@@ -31,13 +27,13 @@ export class HubManager extends NativeClass {
 
     teardown() {
         return Q(null).then(() => {
-            console.log("booo");
+
         });
     }
 
     setupConnection(connection : IConnection) {
         connection.messageObservable.subscribe((message : Message) => {
-            message.parse(this._messageContentParser);
+
         });
     }
 

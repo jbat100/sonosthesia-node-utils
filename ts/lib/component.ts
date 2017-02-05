@@ -23,9 +23,9 @@ export class ComponentInfo extends Info {
 
     get channels() { return this._channels; }
 
-    makeJSON() : any {
-        const obj : any = super.makeJSON();
-        obj['channels'] = _.map(this.channels, (channel : ChannelInfo) => { return channel.makeJSON(); });
+    toJSON() : any {
+        const obj : any = super.toJSON();
+        obj['channels'] = _.map(this.channels, (channel : ChannelInfo) => { return channel.toJSON(); });
         return obj;
     }
 
@@ -69,12 +69,12 @@ export class ChannelInfo extends Info {
 
     get parameters() : ParameterInfo[] { return this._parameters; }
 
-    makeJSON() : any {
-        const obj = super.makeJSON();
+    toJSON() : any {
+        const obj = super.toJSON();
         obj.flow = ChannelFlow[this.flow]; // convert to string
         obj.producer = ChannelType[this.type];
         obj.parameters = _.map(this.parameters, (parameter : ParameterInfo) => {
-            return parameter.makeJSON();
+            return parameter.toJSON();
         });
         return obj;
     }
@@ -97,10 +97,10 @@ export class ParameterInfo extends Info {
 
     get range() : Range { return this._range; }
 
-    makeJSON() {
-        const obj : any = super.makeJSON();
+    toJSON() {
+        const obj : any = super.toJSON();
         obj.defaultValue = this.defaultValue;
-        obj.range = this.range.makeJSON();
+        obj.range = this.range.toJSON();
         return obj;
     }
 

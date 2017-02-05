@@ -7,7 +7,7 @@ import * as Q from 'q';
 import * as Rx from 'rx';
 import {EventEmitter} from 'eventemitter3';
 
-import {NativeClass, Message, IConnection} from './core';
+import {NativeClass, Message, MessageContentParser, IConnection} from './core';
 
 const LineInputStream = require('line-input-stream');
 
@@ -15,7 +15,7 @@ const LineInputStream = require('line-input-stream');
  * TCPConnector runs server side and spawns TCPConnection instances upon incoming socket connections
  */
 
-class TCPConnector extends NativeClass {
+export class TCPConnector extends NativeClass {
 
     readonly verbose = true;
     private _error : Error;
@@ -23,16 +23,22 @@ class TCPConnector extends NativeClass {
     private _connections : TCPConnection[] = [];
     private _emitter : any = new EventEmitter();
 
+    constructor(private _parser : MessageContentParser)
+    {
+        super();
+    }
+
     get server() { return this._server; }
     get error() { return this._error; }
     get emitter() { return this._emitter; }
+    get parser() { return this._parser; }
 
-    start(port) {
+    start(port) : Promise<void> {
         return new Promise((resolve, reject) => {
-            if (this.server) return reject(new Error('connector is alredy started'));
+            if (this.server) return reject(new Error('connector is already started'));
             console.info(this.tag + ' start on port ' + port);
             this._server = net.createServer((socket) => {
-                const connection = new TCPConnection(this, socket);
+                const connection = new TCPConnection(this, socket, this.parser);
                 this._connections.push(connection);
                 this.emitter.emit('connection', connection);
             });
@@ -68,8 +74,8 @@ class TCPConnector extends NativeClass {
         });
     }
 
-    stop() {
-        return Q().then(() => {
+    stop() : Promise<void> {
+        return Promise.resolve().then(() => {
             if (this.server) {
                 this.server.removeAllListeners();
                 this.server.close();
@@ -93,14 +99,18 @@ class TCPConnector extends NativeClass {
  */
 
 
-class TCPConnection extends NativeClass implements IConnection {
+export class TCPConnection extends NativeClass implements IConnection {
+
+    readonly verbose = true;
 
     private _lineInputStream : any;
 
     private _messageSubject : Rx.Subject<Message> = new Rx.Subject<Message>();
     private _messageObservable: Rx.Observable<Message> = this._messageSubject.asObservable();
 
-    constructor(private _connector : TCPConnector, private _socket : net.Socket) {
+    constructor(private _connector : TCPConnector,
+                private _socket : net.Socket,
+                private _parser : MessageContentParser) {
         super();
         console.info(this.tag + ' initialize with socket : ' + this.socket.remoteAddress +':'+ this.socket.remotePort);
         // destroy connection on socket close or error
@@ -122,7 +132,8 @@ class TCPConnection extends NativeClass implements IConnection {
             if (line && line.length) {
                 try {
                     //console.info(this.tag + ' parsed json');
-                    this._messageSubject.onNext(Message.newFromRaw(line));
+                    const obj = JSON.parse(line);
+                    this._messageSubject.onNext(Message.newFromJSON(obj, this.parser));
                 } catch (err) {
                     console.error(this.tag + ' json parsing error : ' + err.message);
                 }
@@ -134,18 +145,20 @@ class TCPConnection extends NativeClass implements IConnection {
 
     }
 
-    get jsonDelimiter() { return '__json_delimiter__'; }
-
+    get jsonDelimiter() : string { return '__json_delimiter__'; }
     get messageObservable() : Rx.Observable<Message> { return this._messageObservable; }
-
     get socket() : net.Socket { return this._socket; }
-
     get connector() : TCPConnector { return this._connector; }
+    get parser() : MessageContentParser { return this._parser; }
 
-    sendMessage(message) {
-        const str = this.jsonDelimiter + JSON.stringify(message) + this.jsonDelimiter;
-        if (this.connector.verbose) console.info(this.tag + ' sending : ' + str);
+    sendJSON(obj : any) {
+        const str = this.jsonDelimiter + JSON.stringify(obj) + this.jsonDelimiter;
+        if (this.verbose) console.info(this.tag + ' sending : ' + str);
         this.socket.write(str);
+    }
+
+    sendMessage(message : Message) {
+        this.sendJSON(message.toJSON());
     }
 
 }

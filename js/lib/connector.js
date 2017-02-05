@@ -1,14 +1,14 @@
 "use strict";
 const net = require("net");
 const _ = require("underscore");
-const Q = require("q");
 const Rx = require("rx");
 const eventemitter3_1 = require("eventemitter3");
 const core_1 = require("./core");
 const LineInputStream = require('line-input-stream');
 class TCPConnector extends core_1.NativeClass {
-    constructor() {
-        super(...arguments);
+    constructor(_parser) {
+        super();
+        this._parser = _parser;
         this.verbose = true;
         this._connections = [];
         this._emitter = new eventemitter3_1.EventEmitter();
@@ -16,13 +16,14 @@ class TCPConnector extends core_1.NativeClass {
     get server() { return this._server; }
     get error() { return this._error; }
     get emitter() { return this._emitter; }
+    get parser() { return this._parser; }
     start(port) {
         return new Promise((resolve, reject) => {
             if (this.server)
-                return reject(new Error('connector is alredy started'));
+                return reject(new Error('connector is already started'));
             console.info(this.tag + ' start on port ' + port);
             this._server = net.createServer((socket) => {
-                const connection = new TCPConnection(this, socket);
+                const connection = new TCPConnection(this, socket, this.parser);
                 this._connections.push(connection);
                 this.emitter.emit('connection', connection);
             });
@@ -56,7 +57,7 @@ class TCPConnector extends core_1.NativeClass {
         });
     }
     stop() {
-        return Q().then(() => {
+        return Promise.resolve().then(() => {
             if (this.server) {
                 this.server.removeAllListeners();
                 this.server.close();
@@ -71,11 +72,14 @@ class TCPConnector extends core_1.NativeClass {
         this.emitter.emit('disconnection', connection);
     }
 }
+exports.TCPConnector = TCPConnector;
 class TCPConnection extends core_1.NativeClass {
-    constructor(_connector, _socket) {
+    constructor(_connector, _socket, _parser) {
         super();
         this._connector = _connector;
         this._socket = _socket;
+        this._parser = _parser;
+        this.verbose = true;
         this._messageSubject = new Rx.Subject();
         this._messageObservable = this._messageSubject.asObservable();
         console.info(this.tag + ' initialize with socket : ' + this.socket.remoteAddress + ':' + this.socket.remotePort);
@@ -95,7 +99,8 @@ class TCPConnection extends core_1.NativeClass {
         this._lineInputStream.on('line', (line) => {
             if (line && line.length) {
                 try {
-                    this._messageSubject.onNext(core_1.Message.newFromRaw(line));
+                    const obj = JSON.parse(line);
+                    this._messageSubject.onNext(core_1.Message.newFromJSON(obj, this.parser));
                 }
                 catch (err) {
                     console.error(this.tag + ' json parsing error : ' + err.message);
@@ -110,12 +115,17 @@ class TCPConnection extends core_1.NativeClass {
     get messageObservable() { return this._messageObservable; }
     get socket() { return this._socket; }
     get connector() { return this._connector; }
-    sendMessage(message) {
-        const str = this.jsonDelimiter + JSON.stringify(message) + this.jsonDelimiter;
-        if (this.connector.verbose)
+    get parser() { return this._parser; }
+    sendJSON(obj) {
+        const str = this.jsonDelimiter + JSON.stringify(obj) + this.jsonDelimiter;
+        if (this.verbose)
             console.info(this.tag + ' sending : ' + str);
         this.socket.write(str);
     }
+    sendMessage(message) {
+        this.sendJSON(message.toJSON());
+    }
 }
+exports.TCPConnection = TCPConnection;
 
 //# sourceMappingURL=connector.js.map

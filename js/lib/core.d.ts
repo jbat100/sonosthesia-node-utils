@@ -3,6 +3,7 @@ import { EventEmitter } from 'eventemitter3';
 import * as Rx from 'rx';
 export interface IConnection {
     messageObservable: Rx.Observable<Message>;
+    sendJSON(message: any): any;
     sendMessage(message: Message): any;
 }
 export declare enum ConnectorState {
@@ -37,11 +38,7 @@ export declare class Message extends NativeClass {
     readonly date: Date;
     readonly content: any;
     readonly raw: string;
-    toJSON(): {
-        type: string;
-        date: string;
-        content: any;
-    };
+    toJSON(): any;
 }
 export declare class Declarable extends NativeClass {
     private _identifier;
@@ -60,7 +57,7 @@ export declare class Info extends NativeClass {
     static newFromJSON(obj: any): Info;
     readonly identifier: string;
     applyJSON(obj: any): void;
-    makeJSON(): any;
+    toJSON(): any;
 }
 export declare class Selection {
     private _identifier;
@@ -77,5 +74,8 @@ export declare class Range extends NativeClass {
     min: number;
     max: number;
     check(): void;
-    makeJSON(): any;
+    toJSON(): any;
+}
+export declare class GUID extends NativeClass {
+    static generate(): string;
 }
