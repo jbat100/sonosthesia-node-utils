@@ -5,6 +5,7 @@ exports.connector = require('./lib/connector');
 exports.core = require('./lib/component');
 exports.hub = require('./lib/hub');
 exports.mapping = require('./lib/mapping');
+exports.messaging = require('./lib/messaging');
 exports.parameter = require('./lib/parameter');
 
 //# sourceMappingURL=index.js.map

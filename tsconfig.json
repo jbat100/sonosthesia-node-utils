@@ -1,4 +1,22 @@
 {
+    "files": [
+        "src/lib/component.ts",
+        "src/lib/configuration.ts",
+        "src/lib/connector.ts",
+        "src/lib/core.ts",
+        "src/lib/hub.ts",
+        "src/lib/mapping.ts",
+        "src/lib/messaging.ts",
+        "src/lib/parameter.ts",
+        "src/test/component.ts",
+        "src/test/playground.ts",
+        "src/tools/generator.ts",
+        "src/tools/server.ts"
+    ],
+    "filesGlob": [
+        "./**/*.ts",
+        "!./node_modules/**/*.ts"
+    ],
     "compilerOptions": {
         "target": "es6",
         "module": "commonjs",
@@ -8,6 +26,6 @@
         "preserveConstEnums": true,
         "declaration": true,
         "suppressImplicitAnyIndexErrors": true,
-        "outDir": "./js"
+        "outDir": "./dist"
     }
 }

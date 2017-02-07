@@ -2,7 +2,8 @@
   "name": "sonosthesia-node-utils",
   "version": "0.0.1",
   "description": "Sonosthesia tools for node",
-  "main": "js/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "dependencies": {
     "chai": "^3.5.0",
     "command-line-args": "^3.0.5",

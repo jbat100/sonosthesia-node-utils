@@ -1,9 +1,9 @@
 'use strict';
 var GulpConfig = (function () {
     function gulpConfig() {
-        this.tsOutputPath = './js';
-        this.allJavaScript = ['./js/**/*.js'];
-        this.allTypeScript = './ts/**/*.ts';
+        this.tsOutputPath = './dist';
+        this.allJavaScript = ['./dist/**/*.js'];
+        this.allTypeScript = './src/**/*.ts';
         this.typings = './typings/';
         this.libraryTypeScriptDefinitions = './typings/generate/**/*.ts';
     }

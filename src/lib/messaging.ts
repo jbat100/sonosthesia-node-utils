@@ -156,11 +156,7 @@ export class InstanceMessageContent extends ChannelMessageContent {
 
 }
 
-export class CreateMessageContent extends InstanceMessageContent {
-
-
-
-}
+export class CreateMessageContent extends InstanceMessageContent { }
 
 export class DestroyMessageContent extends InstanceMessageContent { }
 
