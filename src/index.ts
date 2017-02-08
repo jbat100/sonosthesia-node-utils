@@ -2,8 +2,11 @@
  * Created by jonathan on 29/01/2017.
  */
 
-// READ THIS!
+// 
+// Read the re-export bit, should be quite simple, the require looses all type information
+// https://www.typescriptlang.org/docs/handbook/modules.html
 // https://github.com/Microsoft/TypeScript-Handbook/blob/master/pages/declaration%20files/Introduction.md
+//  
 
 // import * as component from './lib/component';
 
